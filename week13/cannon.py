@@ -23,7 +23,20 @@ class GameObject:
     def draw(self, screen):
         pass  
 
-
+class Tank(GameObject):
+    def __init__(self, coord=[30, SCREEN_SIZE[1]//2], angle=0, maxSpeed = 10, color = BLACK):
+        '''
+        Constructor method
+        '''
+        self.coord = coord
+        self.angle = angle
+        self.maxSpeed = maxSpeed
+        self.color = color
+        self.active = False
+    def activate(self):
+        self.active = True
+    
+    
 class Shell(GameObject):
     '''
     The ball class. Creates a ball, controls it's movement and implement it's rendering.
@@ -322,7 +335,7 @@ class Manager:
 
 
 screen = pg.display.set_mode(SCREEN_SIZE)
-pg.display.set_caption("The gun of Khiryanov")
+pg.display.set_caption("Our gun")
 
 done = False
 clock = pg.time.Clock()
