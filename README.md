@@ -1,2 +1,2 @@
-# python_programming_class
-Python for programmers class
+# Group_assignment
+Refactoring and extending the cannon project
