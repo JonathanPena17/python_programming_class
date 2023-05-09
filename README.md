@@ -1,5 +1,6 @@
 # Group_assignment
 Refactoring and extending the cannon project
+
 Things to be implemented:
 1. Implement various types of projectiles.
 2. Develop several target types with different movement patterns.
