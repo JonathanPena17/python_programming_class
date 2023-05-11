@@ -25,7 +25,7 @@ class GameObject:
         pass  
 
 class Tank(GameObject):
-    def __init__(self, coord=[30, SCREEN_SIZE[1]//2], angle=0, maxSpeed = 10, color = BLACK):
+    def __init__(self, coord=[SCREEN_SIZE[0]//2, SCREEN_SIZE[1]-30], angle=0, maxSpeed = 10, color = BLACK):
         '''
         Constructor method
         '''
@@ -42,7 +42,7 @@ class Tank(GameObject):
         '''
         # pg.draw.rect(screen, WHITE, [10, 20, 30, 40])
     
-        pg.draw.rect(screen, WHITE, [self.coord[0]-10,self.coord[1]-15,20,30])
+        pg.draw.rect(screen, WHITE, [self.coord[0]-15,self.coord[1]-10,30,20])
         self.move(self.inc)
     def move(self, inc):
         '''
@@ -50,8 +50,8 @@ class Tank(GameObject):
         '''
         self.inc = inc
         if (self.moving):
-            if (self.coord[1] > 30 or inc > 0) and (self.coord[1] < SCREEN_SIZE[1] - 30 or inc < 0):
-                self.coord[1] += inc
+            if (self.coord[0] > 30 or inc > 0) and (self.coord[0] < SCREEN_SIZE[0] - 30 or inc < 0):
+                self.coord[0] += inc
 class Shell(GameObject):
     '''
     The ball class. Creates a ball, controls it's movement and implement it's rendering.
@@ -106,7 +106,7 @@ class Cannon(GameObject):
     '''
     Cannon class. Manages it's renderring, movement and striking.
     '''
-    def __init__(self, coord=[30, SCREEN_SIZE[1]//2], angle=0, max_pow=50, min_pow=10, color=RED):
+    def __init__(self, coord=[SCREEN_SIZE[0]//2, SCREEN_SIZE[1]-30], angle=0, max_pow=50, min_pow=10, color=RED):
         '''
         Constructor method. Sets coordinate, direction, minimum and maximum power and color of the gun.
         '''
@@ -156,8 +156,8 @@ class Cannon(GameObject):
         '''
         self.inc = inc
         if (self.moving):
-            if (self.coord[1] > 30 or inc > 0) and (self.coord[1] < SCREEN_SIZE[1] - 30 or inc < 0):
-                self.coord[1] += inc
+            if (self.coord[0] > 30 or inc > 0) and (self.coord[0] < SCREEN_SIZE[0] - 30 or inc < 0):
+                self.coord[0] += inc
 
     def draw(self, screen):
         '''
@@ -409,12 +409,12 @@ class Manager:
             if event.type == pg.QUIT:
                 done = True
             elif event.type == pg.KEYDOWN:
-                if event.key == pg.K_UP:
+                if event.key == pg.K_LEFT:
                     self.gun.moving = True
                     self.gun.move(-5)
                     self.tank.moving = True
                     self.tank.move(-5)
-                elif event.key == pg.K_DOWN:
+                elif event.key == pg.K_RIGHT:
                     self.gun.moving = True
                     self.gun.move(5)
                     self.tank.moving = True
