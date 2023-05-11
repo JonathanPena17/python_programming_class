@@ -1,6 +1,7 @@
 import numpy as np
 import pygame as pg
 from random import randint, gauss
+import math
 
 pg.init()
 pg.font.init()
@@ -222,7 +223,94 @@ class LinearMovingTargets(Target):
                 else:
                     self.vy = -int(self.vy)
 
-
+class RandomMovingTargets(Target):
+    def __init__(self, coord=None, color=None, rad=30):
+        super().__init__(coord, color, rad)
+    
+    def move(self):
+        self.vx = randint(-2, +2)
+        self.vy = randint(-2, +2)
+        self.coord[0] += self.vx
+        self.coord[1] += self.vy
+        self.check_corners()
+    def check_corners(self):
+        '''
+        Reflects ball's velocity when ball bumps into the screen corners. Implemetns inelastic rebounce.
+        '''
+        for i in range(2):
+            if self.coord[i] < self.rad:
+                self.coord[i] = self.rad
+                if i == 0:
+                    self.vx = -int(self.vx)
+                else:
+                    self.vy = -int(self.vy)
+            elif self.coord[i] > SCREEN_SIZE[i] - self.rad:
+                self.coord[i] = SCREEN_SIZE[i] - self.rad
+                if i == 0:
+                    self.vx = -int(self.vx)
+                else:
+                    self.vy = -int(self.vy)
+class SmoothRandomMovingTargets(Target):
+    def __init__(self, coord=None, color=None, rad=30):
+        super().__init__(coord, color, rad)
+        self.vx = randint(-2, +2)
+        self.vy = randint(-2, +2)
+    
+    def move(self):
+        if self.vx >= 0 and self.vy >= 0:
+            self.vx = randint(0, +2)
+            self.vy = randint(0, +2)
+        if self.vx <= 0 and self.vy >= 0:
+            self.vx = randint(-2, 0)
+            self.vy = randint(0, +2)
+        if self.vx <= 0 and self.vy <= 0:
+            self.vx = randint(-2, 0)
+            self.vy = randint(-2, 0)
+        if self.vx >= 0 and self.vy <= 0:
+            self.vx = randint(0, +2)
+            self.vy = randint(-2, 0)
+        self.coord[0] += self.vx
+        self.coord[1] += self.vy
+        self.check_corners()
+    def check_corners(self):
+        '''
+        Reflects ball's velocity when ball bumps into the screen corners. Implemetns inelastic rebounce.
+        '''
+        for i in range(2):
+            if self.coord[i] < self.rad:
+                self.coord[i] = self.rad
+                if i == 0:
+                    self.vx = -int(self.vx)
+                else:
+                    self.vy = -int(self.vy)
+            elif self.coord[i] > SCREEN_SIZE[i] - self.rad:
+                self.coord[i] = SCREEN_SIZE[i] - self.rad
+                if i == 0:
+                    self.vx = -int(self.vx)
+                else:
+                    self.vy = -int(self.vy)
+class CircularMovingTargets(Target):
+    def __init__(self, coord=None, color=None, rad=30):
+        super().__init__(coord, color, rad)
+        self.time = 0
+        self.offset = randint(-16, 16)
+    
+    def move(self):
+        self.time = self.time + 1
+        self.coord[0] += self.offset*math.sin(self.time/self.offset)
+        self.coord[1] += self.offset*math.cos(self.time/self.offset)
+        self.check_corners()
+    
+    def check_corners(self):
+        '''
+        Reflects ball's velocity when ball bumps into the screen corners. Implemetns inelastic rebounce.
+        '''
+        for i in range(2):
+            if self.coord[i] < self.rad:
+                self.coord[i] = self.rad
+            elif self.coord[i] > SCREEN_SIZE[i] - self.rad:
+                self.coord[i] = SCREEN_SIZE[i] - self.rad
+    
 class ScoreTable:
     '''
     Score table class.
@@ -264,12 +352,10 @@ class Manager:
         Adds new targets.
         '''
         for i in range(self.n_targets):
-            self.targets.append(LinearMovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),
-                30 - max(0, self.score_t.score()))))
-            self.targets.append(Target(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),
-                30 - max(0, self.score_t.score()))))
-
-
+            self.targets.append(LinearMovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),30 - max(0, self.score_t.score()))))
+            self.targets.append(Target(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())), 30 - max(0, self.score_t.score()))))
+            self.targets.append(SmoothRandomMovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),30 - max(0, self.score_t.score()))))
+            self.targets.append(CircularMovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),30 - max(0, self.score_t.score()))))
     def process(self, events, screen):
         '''
         Runs all necessary method for each iteration. Adds new targets, if previous are destroyed.
