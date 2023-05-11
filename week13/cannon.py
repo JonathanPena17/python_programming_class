@@ -123,6 +123,7 @@ class Cannon(GameObject):
         vel = self.pow
         angle = self.angle
         ball = Shell(list(self.coord), [int(vel * np.cos(angle)), int(vel * np.sin(angle))])
+        # add new shell
         self.pow = self.min_pow
         self.active = False
         return ball
@@ -293,7 +294,7 @@ class CircularMovingTargets(Target):
     def __init__(self, coord=None, color=None, rad=30):
         super().__init__(coord, color, rad)
         self.time = 0
-        self.offset = randint(-16, 16)
+        self.offset = randint(-8, 8)
     
     def move(self):
         self.time = self.time + 1
@@ -310,7 +311,9 @@ class CircularMovingTargets(Target):
                 self.coord[i] = self.rad
             elif self.coord[i] > SCREEN_SIZE[i] - self.rad:
                 self.coord[i] = SCREEN_SIZE[i] - self.rad
-    
+class BombDroppingTarget(LinearMovingTargets):
+    def __init__(self, coord=None, color=None, rad=30):
+        super().__init__(coord, color, rad)
 class ScoreTable:
     '''
     Score table class.
@@ -446,7 +449,7 @@ pg.display.set_caption("Our gun")
 done = False
 clock = pg.time.Clock()
 
-mgr = Manager(n_targets=3)
+mgr = Manager(n_targets=2) # number of targets per type
 
 while not done:
     clock.tick(15)
