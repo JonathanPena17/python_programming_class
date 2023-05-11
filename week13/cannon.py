@@ -81,6 +81,7 @@ class Shell(GameObject):
         '''
         Moves the ball according to it's velocity and time step.
         Changes the ball's velocity due to gravitational force.
+        hahahshds
         '''
         self.vel[1] += grav
         for i in range(2):
