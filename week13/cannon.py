@@ -34,6 +34,8 @@ class Tank(GameObject):
         self.maxSpeed = maxSpeed
         self.color = color
         self.active = False
+        self.moving = False
+        self.inc = 0
     def draw(self, screen):
         '''
         Draws the target on the screen
@@ -41,12 +43,15 @@ class Tank(GameObject):
         # pg.draw.rect(screen, WHITE, [10, 20, 30, 40])
     
         pg.draw.rect(screen, WHITE, [self.coord[0]-10,self.coord[1]-15,20,30])
+        self.move(self.inc)
     def move(self, inc):
         '''
         Changes vertical position of the gun.
         '''
-        if (self.coord[1] > 30 or inc > 0) and (self.coord[1] < SCREEN_SIZE[1] - 30 or inc < 0):
-            self.coord[1] += inc
+        self.inc = inc
+        if (self.moving):
+            if (self.coord[1] > 30 or inc > 0) and (self.coord[1] < SCREEN_SIZE[1] - 30 or inc < 0):
+                self.coord[1] += inc
 class Shell(GameObject):
     '''
     The ball class. Creates a ball, controls it's movement and implement it's rendering.
@@ -112,6 +117,8 @@ class Cannon(GameObject):
         self.color = color
         self.active = False
         self.pow = min_pow
+        self.moving = False
+        self.inc = 0
     
     def activate(self):
         '''
@@ -133,7 +140,6 @@ class Cannon(GameObject):
         vel = self.pow
         angle = self.angle
         ball = Shell(list(self.coord), [int(vel * np.cos(angle)), int(vel * np.sin(angle))])
-        # add new shell
         self.pow = self.min_pow
         self.active = False
         return ball
@@ -148,8 +154,10 @@ class Cannon(GameObject):
         '''
         Changes vertical position of the gun.
         '''
-        if (self.coord[1] > 30 or inc > 0) and (self.coord[1] < SCREEN_SIZE[1] - 30 or inc < 0):
-            self.coord[1] += inc
+        self.inc = inc
+        if (self.moving):
+            if (self.coord[1] > 30 or inc > 0) and (self.coord[1] < SCREEN_SIZE[1] - 30 or inc < 0):
+                self.coord[1] += inc
 
     def draw(self, screen):
         '''
@@ -164,6 +172,7 @@ class Cannon(GameObject):
         gun_shape.append((gun_pos + vec_2 - vec_1).tolist())
         gun_shape.append((gun_pos - vec_1).tolist())
         pg.draw.polygon(screen, self.color, gun_shape)
+        self.move(self.inc)
 
 
 class Target(GameObject):
@@ -401,11 +410,18 @@ class Manager:
                 done = True
             elif event.type == pg.KEYDOWN:
                 if event.key == pg.K_UP:
+                    self.gun.moving = True
                     self.gun.move(-5)
+                    self.tank.moving = True
                     self.tank.move(-5)
                 elif event.key == pg.K_DOWN:
+                    self.gun.moving = True
                     self.gun.move(5)
+                    self.tank.moving = True
                     self.tank.move(5)
+            elif event.type == pg.KEYUP:
+                self.gun.moving = False
+                self.tank.moving = False
             elif event.type == pg.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     self.gun.activate()
