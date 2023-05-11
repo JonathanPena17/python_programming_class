@@ -34,10 +34,19 @@ class Tank(GameObject):
         self.maxSpeed = maxSpeed
         self.color = color
         self.active = False
-    def activate(self):
-        self.active = True
+    def draw(self, screen):
+        '''
+        Draws the target on the screen
+        '''
+        # pg.draw.rect(screen, WHITE, [10, 20, 30, 40])
     
-    
+        pg.draw.rect(screen, WHITE, [self.coord[0]-10,self.coord[1]-15,20,30])
+    def move(self, inc):
+        '''
+        Changes vertical position of the gun.
+        '''
+        if (self.coord[1] > 30 or inc > 0) and (self.coord[1] < SCREEN_SIZE[1] - 30 or inc < 0):
+            self.coord[1] += inc
 class Shell(GameObject):
     '''
     The ball class. Creates a ball, controls it's movement and implement it's rendering.
@@ -85,7 +94,7 @@ class Shell(GameObject):
         Draws the ball on appropriate surface.
         '''
         pg.draw.circle(screen, self.color, self.coord, self.rad)
-
+  
 
 class Cannon(GameObject):
     '''
@@ -295,6 +304,8 @@ class CircularMovingTargets(Target):
         super().__init__(coord, color, rad)
         self.time = 0
         self.offset = randint(-8, 8)
+        if self.offset == 0:
+            self.offset = self.offset + 1
     
     def move(self):
         self.time = self.time + 1
@@ -349,6 +360,7 @@ class Manager:
         self.score_t = ScoreTable()
         self.n_targets = n_targets
         self.new_mission()
+        self.tank = Tank()
 
     def new_mission(self):
         '''
@@ -389,8 +401,10 @@ class Manager:
             elif event.type == pg.KEYDOWN:
                 if event.key == pg.K_UP:
                     self.gun.move(-5)
+                    self.tank.move(-5)
                 elif event.key == pg.K_DOWN:
                     self.gun.move(5)
+                    self.tank.move(5)
             elif event.type == pg.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     self.gun.activate()
@@ -408,8 +422,10 @@ class Manager:
             ball.draw(screen)
         for target in self.targets:
             target.draw(screen)
+        self.tank.draw(screen)
         self.gun.draw(screen)
         self.score_t.draw(screen)
+        
 
     def move(self):
         '''
