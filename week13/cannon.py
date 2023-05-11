@@ -170,6 +170,8 @@ class Target(GameObject):
         if color == None:
             color = rand_color()
         self.color = color
+        
+        
 
     def check_collision(self, ball):
         '''
@@ -192,7 +194,7 @@ class Target(GameObject):
         """
         pass
 
-class MovingTargets(Target):
+class LinearMovingTargets(Target):
     def __init__(self, coord=None, color=None, rad=30):
         super().__init__(coord, color, rad)
         self.vx = randint(-2, +2)
@@ -201,6 +203,24 @@ class MovingTargets(Target):
     def move(self):
         self.coord[0] += self.vx
         self.coord[1] += self.vy
+        self.check_corners()
+    def check_corners(self):
+        '''
+        Reflects ball's velocity when ball bumps into the screen corners. Implemetns inelastic rebounce.
+        '''
+        for i in range(2):
+            if self.coord[i] < self.rad:
+                self.coord[i] = self.rad
+                if i == 0:
+                    self.vx = -int(self.vx)
+                else:
+                    self.vy = -int(self.vy)
+            elif self.coord[i] > SCREEN_SIZE[i] - self.rad:
+                self.coord[i] = SCREEN_SIZE[i] - self.rad
+                if i == 0:
+                    self.vx = -int(self.vx)
+                else:
+                    self.vy = -int(self.vy)
 
 
 class ScoreTable:
@@ -244,7 +264,7 @@ class Manager:
         Adds new targets.
         '''
         for i in range(self.n_targets):
-            self.targets.append(MovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),
+            self.targets.append(LinearMovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),
                 30 - max(0, self.score_t.score()))))
             self.targets.append(Target(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),
                 30 - max(0, self.score_t.score()))))
