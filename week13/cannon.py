@@ -52,6 +52,12 @@ class Tank(GameObject):
         if (self.moving):
             if (self.coord[0] > 30 or inc > 0) and (self.coord[0] < SCREEN_SIZE[0] - 30 or inc < 0):
                 self.coord[0] += inc
+    def checkCollision(self, Shell):
+        if (Shell.coord[0] > self.coord[0] - 15 and Shell.coord[0] < self.coord[0] + 15):
+            if (Shell.coord[1] < self.coord[1] - 10):
+                return True
+            
+        return False
 class Shell(GameObject):
     '''
     The ball class. Creates a ball, controls it's movement and implement it's rendering.
@@ -100,8 +106,6 @@ class Shell(GameObject):
         Draws the ball on appropriate surface.
         '''
         pg.draw.circle(screen, self.color, self.coord, self.rad)
-  
-
 class Cannon(GameObject):
     '''
     Cannon class. Manages it's renderring, movement and striking.
@@ -173,8 +177,6 @@ class Cannon(GameObject):
         gun_shape.append((gun_pos - vec_1).tolist())
         pg.draw.polygon(screen, self.color, gun_shape)
         self.move(self.inc)
-
-
 class Target(GameObject):
     '''
     Target class. Creates target, manages it's rendering and collision with a ball event.
@@ -214,7 +216,6 @@ class Target(GameObject):
         :return: None
         """
         pass
-
 class LinearMovingTargets(Target):
     def __init__(self, coord=None, color=None, rad=30):
         super().__init__(coord, color, rad)
@@ -242,7 +243,6 @@ class LinearMovingTargets(Target):
                     self.vx = -int(self.vx)
                 else:
                     self.vy = -int(self.vy)
-
 class RandomMovingTargets(Target):
     def __init__(self, coord=None, color=None, rad=30):
         super().__init__(coord, color, rad)
@@ -474,6 +474,7 @@ class Manager:
         for j in reversed(targets_c):
             self.score_t.t_destr += 1
             self.targets.pop(j)
+        
 
 
 screen = pg.display.set_mode(SCREEN_SIZE)
