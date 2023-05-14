@@ -332,9 +332,56 @@ class CircularMovingTargets(Target):
                 self.coord[i] = self.rad
             elif self.coord[i] > SCREEN_SIZE[i] - self.rad:
                 self.coord[i] = SCREEN_SIZE[i] - self.rad
-class BombDroppingTarget(LinearMovingTargets):
+class BombDroppingTarget(Target):
     def __init__(self, coord=None, color=None, rad=30):
         super().__init__(coord, color, rad)
+        self.vx = randint(-2, +2)
+        self.vy = randint(-2, +2)
+        self.bombs = []  # Initialize the bombs attribute as an empty list
+
+    def move(self):
+        self.coord[0] += self.vx
+        self.coord[1] = self.rad  # Restrict vertical movement to the top of the screen
+        self.check_corners()
+        
+        # Drop a bomb at a certain probability
+        if randint(1, 100) < 2:  # 5% chance of dropping a bomb
+            self.drop_bomb()
+        
+         # Apply gravity to the bombs
+        for bomb in self.bombs:
+            bomb.move(time=1, grav=0.5)  # Adjust the gravity value as needed
+        
+    def check_corners(self):
+        '''
+        Reflects ball's velocity when ball bumps into the screen corners. Implemetns inelastic rebounce.
+        '''
+        for i in range(2):
+            if self.coord[i] < self.rad:
+                self.coord[i] = self.rad
+                if i == 0:
+                    self.vx = -int(self.vx)
+                else:
+                    self.vy = -int(self.vy)
+            elif self.coord[i] > SCREEN_SIZE[i] - self.rad:
+                self.coord[i] = SCREEN_SIZE[i] - self.rad
+                if i == 0:
+                    self.vx = -int(self.vx)
+                else:
+                    self.vy = -int(self.vy)
+    
+    def drop_bomb(self):
+        # Create a new bomb object at the current position of the target
+        bomb = Shell(list(self.coord), [0, 5], rad=10, color=RED)  # Customize the bomb properties as needed
+        self.bombs.append(bomb)  # Add the bomb to the bombs list
+
+    def draw(self, screen):
+        super().draw(screen)  # Call the draw method of the parent class
+        
+        # Draw the bombs on the screen
+        for bomb in self.bombs:
+            bomb.draw(screen)
+
 class ScoreTable:
     '''
     Score table class.
@@ -381,6 +428,8 @@ class Manager:
             self.targets.append(Target(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())), 30 - max(0, self.score_t.score()))))
             self.targets.append(SmoothRandomMovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),30 - max(0, self.score_t.score()))))
             self.targets.append(CircularMovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),30 - max(0, self.score_t.score()))))
+            # Add BombDroppingTarget
+            self.targets.append(BombDroppingTarget(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())), 30 - max(0, self.score_t.score()))))
     def process(self, events, screen):
         '''
         Runs all necessary method for each iteration. Adds new targets, if previous are destroyed.
