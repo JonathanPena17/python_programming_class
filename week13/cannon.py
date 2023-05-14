@@ -36,14 +36,15 @@ class Tank(GameObject):
         self.active = False
         self.moving = False
         self.inc = 0
+        self.alive = True
     def draw(self, screen):
         '''
         Draws the target on the screen
         '''
         # pg.draw.rect(screen, WHITE, [10, 20, 30, 40])
-    
-        pg.draw.rect(screen, WHITE, [self.coord[0]-15,self.coord[1]-10,30,20])
-        self.move(self.inc)
+        if (self.alive):
+            pg.draw.rect(screen, WHITE, [self.coord[0]-15,self.coord[1]-10,30,20])
+            self.move(self.inc)
     def move(self, inc):
         '''
         Changes vertical position of the gun.
@@ -54,9 +55,8 @@ class Tank(GameObject):
                 self.coord[0] += inc
     def checkCollision(self, Shell):
         if (Shell.coord[0] > self.coord[0] - 15 and Shell.coord[0] < self.coord[0] + 15):
-            if (Shell.coord[1] < self.coord[1] - 10):
+            if (Shell.coord[1] > self.coord[1] - 10):
                 return True
-            
         return False
 class Shell(GameObject):
     '''
@@ -123,6 +123,7 @@ class Cannon(GameObject):
         self.pow = min_pow
         self.moving = False
         self.inc = 0
+        self.alive = True
     
     def activate(self):
         '''
@@ -141,11 +142,12 @@ class Cannon(GameObject):
         '''
         Creates ball, according to gun's direction and current charge power.
         '''
-        vel = self.pow
-        angle = self.angle
-        ball = Shell(list(self.coord), [int(vel * np.cos(angle)), int(vel * np.sin(angle))])
-        self.pow = self.min_pow
-        self.active = False
+        if self.alive:
+            vel = self.pow
+            angle = self.angle
+            ball = Shell(list(self.coord), [int(vel * np.cos(angle)), int(vel * np.sin(angle))])
+            self.pow = self.min_pow
+            self.active = False
         return ball
         
     def set_angle(self, target_pos):
@@ -167,16 +169,17 @@ class Cannon(GameObject):
         '''
         Draws the gun on the screen.
         '''
-        gun_shape = []
-        vec_1 = np.array([int(5*np.cos(self.angle - np.pi/2)), int(5*np.sin(self.angle - np.pi/2))])
-        vec_2 = np.array([int(self.pow*np.cos(self.angle)), int(self.pow*np.sin(self.angle))])
-        gun_pos = np.array(self.coord)
-        gun_shape.append((gun_pos + vec_1).tolist())
-        gun_shape.append((gun_pos + vec_1 + vec_2).tolist())
-        gun_shape.append((gun_pos + vec_2 - vec_1).tolist())
-        gun_shape.append((gun_pos - vec_1).tolist())
-        pg.draw.polygon(screen, self.color, gun_shape)
-        self.move(self.inc)
+        if (self.alive):
+            gun_shape = []
+            vec_1 = np.array([int(5*np.cos(self.angle - np.pi/2)), int(5*np.sin(self.angle - np.pi/2))])
+            vec_2 = np.array([int(self.pow*np.cos(self.angle)), int(self.pow*np.sin(self.angle))])
+            gun_pos = np.array(self.coord)
+            gun_shape.append((gun_pos + vec_1).tolist())
+            gun_shape.append((gun_pos + vec_1 + vec_2).tolist())
+            gun_shape.append((gun_pos + vec_2 - vec_1).tolist())
+            gun_shape.append((gun_pos - vec_1).tolist())
+            pg.draw.polygon(screen, self.color, gun_shape)
+            self.move(self.inc)
 class Target(GameObject):
     '''
     Target class. Creates target, manages it's rendering and collision with a ball event.
@@ -189,6 +192,7 @@ class Target(GameObject):
             coord = [randint(rad, SCREEN_SIZE[0] - rad), randint(rad, SCREEN_SIZE[1] - rad)]
         self.coord = coord
         self.rad = rad
+        self.dropsBombs = False
 
         if color == None:
             color = rand_color()
@@ -338,6 +342,7 @@ class BombDroppingTarget(Target):
         self.vx = randint(-2, +2)
         self.vy = randint(-2, +2)
         self.bombs = []  # Initialize the bombs attribute as an empty list
+        self.dropsBombs = True
 
     def move(self):
         self.coord[0] += self.vx
@@ -418,6 +423,7 @@ class Manager:
         self.n_targets = n_targets
         self.new_mission()
         self.tank = Tank()
+        self.dead = False
 
     def new_mission(self):
         '''
@@ -439,7 +445,6 @@ class Manager:
         if pg.mouse.get_focused():
             mouse_pos = pg.mouse.get_pos()
             self.gun.set_angle(mouse_pos)
-        
         self.move()
         self.collide()
         self.draw(screen)
@@ -475,9 +480,12 @@ class Manager:
                 if event.button == 1:
                     self.gun.activate()
             elif event.type == pg.MOUSEBUTTONUP:
-                if event.button == 1:
+                if event.button == 1 and not self.dead:
                     self.balls.append(self.gun.strike())
                     self.score_t.b_used += 1
+            #elif self.dead:
+                #clock.tick(60000)
+                #done = True
         return done
 
     def draw(self, screen):
@@ -523,6 +531,13 @@ class Manager:
         for j in reversed(targets_c):
             self.score_t.t_destr += 1
             self.targets.pop(j)
+        for target in self.targets:
+            if target.dropsBombs == True:
+                for bomb in target.bombs:
+                    if (self.tank.checkCollision(bomb)):
+                        self.tank.alive = False
+                        self.gun.alive = False
+                        self.dead = True
         
 
 
