@@ -1,6 +1,7 @@
 import numpy as np
 import pygame as pg
 from random import randint, gauss
+import math
 
 pg.init()
 pg.font.init()
@@ -23,7 +24,34 @@ class GameObject:
     def draw(self, screen):
         pass  
 
-
+class Tank(GameObject):
+    def __init__(self, coord=[SCREEN_SIZE[0]//2, SCREEN_SIZE[1]-30], angle=0, maxSpeed = 10, color = BLACK):
+        '''
+        Constructor method
+        '''
+        self.coord = coord
+        self.angle = angle
+        self.maxSpeed = maxSpeed
+        self.color = color
+        self.active = False
+        self.moving = False
+        self.inc = 0
+    def draw(self, screen):
+        '''
+        Draws the target on the screen
+        '''
+        # pg.draw.rect(screen, WHITE, [10, 20, 30, 40])
+    
+        pg.draw.rect(screen, WHITE, [self.coord[0]-15,self.coord[1]-10,30,20])
+        self.move(self.inc)
+    def move(self, inc):
+        '''
+        Changes vertical position of the gun.
+        '''
+        self.inc = inc
+        if (self.moving):
+            if (self.coord[0] > 30 or inc > 0) and (self.coord[0] < SCREEN_SIZE[0] - 30 or inc < 0):
+                self.coord[0] += inc
 class Shell(GameObject):
     '''
     The ball class. Creates a ball, controls it's movement and implement it's rendering.
@@ -58,6 +86,7 @@ class Shell(GameObject):
         '''
         Moves the ball according to it's velocity and time step.
         Changes the ball's velocity due to gravitational force.
+        hahahshds
         '''
         self.vel[1] += grav
         for i in range(2):
@@ -71,13 +100,13 @@ class Shell(GameObject):
         Draws the ball on appropriate surface.
         '''
         pg.draw.circle(screen, self.color, self.coord, self.rad)
-
+  
 
 class Cannon(GameObject):
     '''
     Cannon class. Manages it's renderring, movement and striking.
     '''
-    def __init__(self, coord=[30, SCREEN_SIZE[1]//2], angle=0, max_pow=50, min_pow=10, color=RED):
+    def __init__(self, coord=[SCREEN_SIZE[0]//2, SCREEN_SIZE[1]-30], angle=0, max_pow=50, min_pow=10, color=RED):
         '''
         Constructor method. Sets coordinate, direction, minimum and maximum power and color of the gun.
         '''
@@ -88,6 +117,8 @@ class Cannon(GameObject):
         self.color = color
         self.active = False
         self.pow = min_pow
+        self.moving = False
+        self.inc = 0
     
     def activate(self):
         '''
@@ -123,8 +154,10 @@ class Cannon(GameObject):
         '''
         Changes vertical position of the gun.
         '''
-        if (self.coord[1] > 30 or inc > 0) and (self.coord[1] < SCREEN_SIZE[1] - 30 or inc < 0):
-            self.coord[1] += inc
+        self.inc = inc
+        if (self.moving):
+            if (self.coord[0] > 30 or inc > 0) and (self.coord[0] < SCREEN_SIZE[0] - 30 or inc < 0):
+                self.coord[0] += inc
 
     def draw(self, screen):
         '''
@@ -139,6 +172,7 @@ class Cannon(GameObject):
         gun_shape.append((gun_pos + vec_2 - vec_1).tolist())
         gun_shape.append((gun_pos - vec_1).tolist())
         pg.draw.polygon(screen, self.color, gun_shape)
+        self.move(self.inc)
 
 
 class Target(GameObject):
@@ -157,6 +191,8 @@ class Target(GameObject):
         if color == None:
             color = rand_color()
         self.color = color
+        
+        
 
     def check_collision(self, ball):
         '''
@@ -179,7 +215,7 @@ class Target(GameObject):
         """
         pass
 
-class MovingTargets(Target):
+class LinearMovingTargets(Target):
     def __init__(self, coord=None, color=None, rad=30):
         super().__init__(coord, color, rad)
         self.vx = randint(-2, +2)
@@ -188,8 +224,117 @@ class MovingTargets(Target):
     def move(self):
         self.coord[0] += self.vx
         self.coord[1] += self.vy
+        self.check_corners()
+    def check_corners(self):
+        '''
+        Reflects ball's velocity when ball bumps into the screen corners. Implemetns inelastic rebounce.
+        '''
+        for i in range(2):
+            if self.coord[i] < self.rad:
+                self.coord[i] = self.rad
+                if i == 0:
+                    self.vx = -int(self.vx)
+                else:
+                    self.vy = -int(self.vy)
+            elif self.coord[i] > SCREEN_SIZE[i] - self.rad:
+                self.coord[i] = SCREEN_SIZE[i] - self.rad
+                if i == 0:
+                    self.vx = -int(self.vx)
+                else:
+                    self.vy = -int(self.vy)
 
-
+class RandomMovingTargets(Target):
+    def __init__(self, coord=None, color=None, rad=30):
+        super().__init__(coord, color, rad)
+    
+    def move(self):
+        self.vx = randint(-2, +2)
+        self.vy = randint(-2, +2)
+        self.coord[0] += self.vx
+        self.coord[1] += self.vy
+        self.check_corners()
+    def check_corners(self):
+        '''
+        Reflects ball's velocity when ball bumps into the screen corners. Implemetns inelastic rebounce.
+        '''
+        for i in range(2):
+            if self.coord[i] < self.rad:
+                self.coord[i] = self.rad
+                if i == 0:
+                    self.vx = -int(self.vx)
+                else:
+                    self.vy = -int(self.vy)
+            elif self.coord[i] > SCREEN_SIZE[i] - self.rad:
+                self.coord[i] = SCREEN_SIZE[i] - self.rad
+                if i == 0:
+                    self.vx = -int(self.vx)
+                else:
+                    self.vy = -int(self.vy)
+class SmoothRandomMovingTargets(Target):
+    def __init__(self, coord=None, color=None, rad=30):
+        super().__init__(coord, color, rad)
+        self.vx = randint(-2, +2)
+        self.vy = randint(-2, +2)
+    
+    def move(self):
+        if self.vx >= 0 and self.vy >= 0:
+            self.vx = randint(0, +2)
+            self.vy = randint(0, +2)
+        if self.vx <= 0 and self.vy >= 0:
+            self.vx = randint(-2, 0)
+            self.vy = randint(0, +2)
+        if self.vx <= 0 and self.vy <= 0:
+            self.vx = randint(-2, 0)
+            self.vy = randint(-2, 0)
+        if self.vx >= 0 and self.vy <= 0:
+            self.vx = randint(0, +2)
+            self.vy = randint(-2, 0)
+        self.coord[0] += self.vx
+        self.coord[1] += self.vy
+        self.check_corners()
+    def check_corners(self):
+        '''
+        Reflects ball's velocity when ball bumps into the screen corners. Implemetns inelastic rebounce.
+        '''
+        for i in range(2):
+            if self.coord[i] < self.rad:
+                self.coord[i] = self.rad
+                if i == 0:
+                    self.vx = -int(self.vx)
+                else:
+                    self.vy = -int(self.vy)
+            elif self.coord[i] > SCREEN_SIZE[i] - self.rad:
+                self.coord[i] = SCREEN_SIZE[i] - self.rad
+                if i == 0:
+                    self.vx = -int(self.vx)
+                else:
+                    self.vy = -int(self.vy)
+class CircularMovingTargets(Target):
+    def __init__(self, coord=None, color=None, rad=30):
+        super().__init__(coord, color, rad)
+        self.time = 0
+        self.offset = randint(-8, 8)
+        if self.offset == 0:
+            self.offset = self.offset + 1
+    
+    def move(self):
+        self.time = self.time + 1
+        self.coord[0] += self.offset*math.sin(self.time/self.offset)
+        self.coord[1] += self.offset*math.cos(self.time/self.offset)
+        self.check_corners()
+    
+    def check_corners(self):
+        '''
+        Reflects ball's velocity when ball bumps into the screen corners. Implemetns inelastic rebounce.
+        '''
+        for i in range(2):
+            if self.coord[i] < self.rad:
+                self.coord[i] = self.rad
+            elif self.coord[i] > SCREEN_SIZE[i] - self.rad:
+                self.coord[i] = SCREEN_SIZE[i] - self.rad
+class BombDroppingTarget(LinearMovingTargets):
+    def __init__(self, coord=None, color=None, rad=30):
+        super().__init__(coord, color, rad)
 class ScoreTable:
     '''
     Score table class.
@@ -225,18 +370,17 @@ class Manager:
         self.score_t = ScoreTable()
         self.n_targets = n_targets
         self.new_mission()
+        self.tank = Tank()
 
     def new_mission(self):
         '''
         Adds new targets.
         '''
         for i in range(self.n_targets):
-            self.targets.append(MovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),
-                30 - max(0, self.score_t.score()))))
-            self.targets.append(Target(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),
-                30 - max(0, self.score_t.score()))))
-
-
+            self.targets.append(LinearMovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),30 - max(0, self.score_t.score()))))
+            self.targets.append(Target(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())), 30 - max(0, self.score_t.score()))))
+            self.targets.append(SmoothRandomMovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),30 - max(0, self.score_t.score()))))
+            self.targets.append(CircularMovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),30 - max(0, self.score_t.score()))))
     def process(self, events, screen):
         '''
         Runs all necessary method for each iteration. Adds new targets, if previous are destroyed.
@@ -265,10 +409,19 @@ class Manager:
             if event.type == pg.QUIT:
                 done = True
             elif event.type == pg.KEYDOWN:
-                if event.key == pg.K_UP:
+                if event.key == pg.K_LEFT:
+                    self.gun.moving = True
                     self.gun.move(-5)
-                elif event.key == pg.K_DOWN:
+                    self.tank.moving = True
+                    self.tank.move(-5)
+                elif event.key == pg.K_RIGHT:
+                    self.gun.moving = True
                     self.gun.move(5)
+                    self.tank.moving = True
+                    self.tank.move(5)
+            elif event.type == pg.KEYUP:
+                self.gun.moving = False
+                self.tank.moving = False
             elif event.type == pg.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     self.gun.activate()
@@ -286,8 +439,10 @@ class Manager:
             ball.draw(screen)
         for target in self.targets:
             target.draw(screen)
+        self.tank.draw(screen)
         self.gun.draw(screen)
         self.score_t.draw(screen)
+        
 
     def move(self):
         '''
@@ -322,12 +477,12 @@ class Manager:
 
 
 screen = pg.display.set_mode(SCREEN_SIZE)
-pg.display.set_caption("The gun of Khiryanov")
+pg.display.set_caption("Our gun")
 
 done = False
 clock = pg.time.Clock()
 
-mgr = Manager(n_targets=3)
+mgr = Manager(n_targets=2) # number of targets per type
 
 while not done:
     clock.tick(15)
