@@ -39,7 +39,7 @@ class Tank(GameObject):
         self.alive = True
     def draw(self, screen):
         '''
-        Draws the target on the screen
+        Draws the tank on the screen
         '''
         # pg.draw.rect(screen, WHITE, [10, 20, 30, 40])
         if (self.alive):
@@ -47,13 +47,16 @@ class Tank(GameObject):
             self.move(self.inc)
     def move(self, inc):
         '''
-        Changes vertical position of the gun.
+        Changes the horizontal position of the tank
         '''
         self.inc = inc
         if (self.moving):
             if (self.coord[0] > 30 or inc > 0) and (self.coord[0] < SCREEN_SIZE[0] - 30 or inc < 0):
                 self.coord[0] += inc
     def checkCollision(self, Shell):
+        '''
+        Checks collision of the tank with shells
+        '''
         if (Shell.coord[0] > self.coord[0] - 15 and Shell.coord[0] < self.coord[0] + 15):
             if (Shell.coord[1] > self.coord[1] - 10):
                 return True
@@ -232,7 +235,7 @@ class LinearMovingTargets(Target):
         self.check_corners()
     def check_corners(self):
         '''
-        Reflects ball's velocity when ball bumps into the screen corners. Implemetns inelastic rebounce.
+        Reflects ball's velocity when ball bumps into the screen corners.
         '''
         for i in range(2):
             if self.coord[i] < self.rad:
@@ -281,6 +284,9 @@ class SmoothRandomMovingTargets(Target):
         self.vy = randint(-2, +2)
     
     def move(self):
+        '''
+        Moves randomly but doesn't fo back and forth
+        '''
         if self.vx >= 0 and self.vy >= 0:
             self.vx = randint(0, +2)
             self.vy = randint(0, +2)
@@ -322,6 +328,9 @@ class CircularMovingTargets(Target):
             self.offset = self.offset + 1
     
     def move(self):
+        '''
+        Moves in a circle
+        '''
         self.time = self.time + 1
         self.coord[0] += self.offset*math.sin(self.time/self.offset)
         self.coord[1] += self.offset*math.cos(self.time/self.offset)
@@ -519,6 +528,7 @@ class Manager:
     def collide(self):
         '''
         Checks whether balls bump into targets, sets balls' alive trigger.
+        Checks if an enemy ball has collided with the tank
         '''
         collisions = []
         targets_c = []
