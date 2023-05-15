@@ -9,6 +9,7 @@ pg.font.init()
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
+YELLOW = (255, 255, 0)
 
 SCREEN_SIZE = (800, 600)
 
@@ -346,12 +347,17 @@ class CircularMovingTargets(Target):
             elif self.coord[i] > SCREEN_SIZE[i] - self.rad:
                 self.coord[i] = SCREEN_SIZE[i] - self.rad
 class BombDroppingTarget(Target):
+    WHITE = (255, 255, 255)
+    BLACK = (0, 0, 0)
+    RED = (255, 0, 0)
+    YELLOW = (255, 255, 0)
+
     def __init__(self, coord=None, color=None, rad=30):
         super().__init__(coord, color, rad)
         self.vx = randint(-2, +2)
         self.vy = randint(-2, +2)
         self.bombs = []  # Initialize the bombs attribute as an empty list
-        self.dropsBombs = True
+        self.tank = Tank()
 
     def move(self):
         self.coord[0] += self.vx
@@ -383,7 +389,30 @@ class BombDroppingTarget(Target):
                     self.vx = -int(self.vx)
                 else:
                     self.vy = -int(self.vy)
-    
+
+        # Check if the bomb touches the ground or the tank
+        for bomb in self.bombs:
+            if bomb.coord[1] >= SCREEN_SIZE[1] - bomb.rad or self.check_collision(bomb):
+                # Bomb explodes when it touches the ground or collides with the tank
+                bomb.is_alive = False
+                self.explosion(bomb.coord[0], bomb.coord[1])  # Call the explosion method with bomb coordinates
+
+        # Remove the bombs that have exploded
+        self.bombs = [bomb for bomb in self.bombs if bomb.is_alive]
+
+        # Remove the bombs that have exploded
+        self.bombs = [bomb for bomb in self.bombs if bomb.is_alive]
+
+    def check_collision(self, bomb):
+        # Check if the bomb collides with the tank
+        tank_width = 30  # Replace with the actual tank's width
+        tank_height = 20  # Replace with the actual tank's height
+        min_dist_x = (tank_width + bomb.rad) / 2  # Minimum distance in the x-axis
+        min_dist_y = (tank_height + bomb.rad) / 2  # Minimum distance in the y-axis
+        dist_x = abs(self.tank.coord[0] - bomb.coord[0])
+        dist_y = abs(self.tank.coord[1] - bomb.coord[1])
+        return dist_x <= min_dist_x and dist_y <= min_dist_y
+
     def drop_bomb(self):
         # Create a new bomb object at the current position of the target
         bomb = Shell(list(self.coord), [0, 5], rad=10, color=RED)  # Customize the bomb properties as needed
@@ -391,10 +420,45 @@ class BombDroppingTarget(Target):
 
     def draw(self, screen):
         super().draw(screen)  # Call the draw method of the parent class
+
         
-        # Draw the bombs on the screen
+        # Draw the bombs on the screen with flashing colors
         for bomb in self.bombs:
+            if randint(1, 2) == 1:  # Randomly select between red and yellow color
+                color = RED
+            else:
+                color = YELLOW
+            bomb.color = color
             bomb.draw(screen)
+    
+    def explosion(self, x, y, size=50):
+        explode = True
+
+        explosion_surface = pg.Surface(screen.get_size())  # Create a surface with the same size as the screen
+        explosion_surface.set_colorkey((0, 0, 0))  # Set black color as the transparent color
+
+        color_choices = [(255, 0, 0), (255, 128, 128), (255, 255, 0), (255, 255, 128)]
+
+        while explode:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    quit()
+
+            magnitude = 1
+
+            while magnitude < size:
+                exploding_bit_x = x + randint(-1 * magnitude, magnitude)
+                exploding_bit_y = y + randint(-1 * magnitude, magnitude)
+
+                pg.draw.circle(explosion_surface, color_choices[randint(0, 3)], (exploding_bit_x, exploding_bit_y),
+                            randint(1, 5))
+                magnitude += 1
+
+            explode = False
+
+        screen.blit(explosion_surface, (0, 0))  # Blit the explosion surface onto the screen
+        pg.display.update()
 
 class ScoreTable:
     '''
