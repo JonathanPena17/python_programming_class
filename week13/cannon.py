@@ -8,9 +8,6 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
-BLUE = (89, 203, 232)
-GREEN = (0, 110, 51)
-
 SCREEN_SIZE = (800, 600)
 def rand_color():
     return (randint(0, 255), randint(0, 255), randint(0, 255))
@@ -133,52 +130,6 @@ class Shell(GameObject):
         Draws the ball on appropriate surface.
         '''
         pg.draw.circle(screen, self.color, self.coord, self.rad)
-
-class Laser(GameObject):
-    '''
-    Create alternate Shell shot that is a straight line.
-    '''
-    def __init__(self, coord, angle, rad=100,  color=None):
-        '''
-        Constructor method. Initializes ball's parameters and initial values.
-        '''
-        self.coord = coord
-        self.angle = angle
-        if color == None:
-            color = rand_color()
-        self.rad = rad
-        self.color = color
-        self.is_alive = True
-       
-    def move(self, grav=0):
-        '''
-        Keeps laser trail stationary
-        '''
-        '''
-         current_time = pg.time.get_ticks() 
-        remove_laser_time = pg.time.get_ticks() + 1000
-        while remove_laser_time >= current_time:
-            current_time = pg.time.get_ticks()
-            if remove_laser_time <= current_time:
-                self.is_alive = False
-        '''
-       
-        pass
-
-    def draw(self, screen):
-        '''
-        Draws line straight from cannon angle
-        '''
-        laser_shape = []
-        vec_1 = np.array([int(5*np.cos(self.angle - np.pi/2)), int(5*np.sin(self.angle - np.pi/2))])
-        vec_2 = np.array([int(800*np.cos(self.angle)), int(800*np.sin(self.angle))])
-        gun_pos = np.array(self.coord)
-        laser_shape.append((gun_pos + vec_1).tolist())
-        laser_shape.append((gun_pos + vec_1 + vec_2).tolist())
-        laser_shape.append((gun_pos + vec_2 - vec_1).tolist())
-        laser_shape.append((gun_pos - vec_1).tolist())
-        pg.draw.polygon(screen, self.color, laser_shape)
-
 class Cannon(GameObject):
     '''
     Cannon class. Manages it's renderring, movement and striking.
@@ -219,32 +170,6 @@ class Cannon(GameObject):
             ball = Shell(list(self.coord), [int(vel * np.cos(angle)), int(vel * np.sin(angle))])
             self.pow = self.min_pow
             self.active = False
-        return ball
-    
-    def strike_laser(self):
-        '''
-        Creates laser, according to gun's direction and current charge power.
-        Must be max power to shoot laser, otherwise shoot blank.
-        '''
-        angle = self.angle
-        if self.pow == 50:
-            ball = Laser(list(self.coord), angle)
-            self.pow = self.min_pow
-            self.active = False
-            
-        else:
-            ball = Shell(list([0,0]), [int(0), int(0)], 0)
-            self.pow = self.min_pow
-            self.active = False     
-        # add new shell
-        return ball
-    
-    def strike_scatter(self, vel, angle):
-        '''
-        Creates 3 balls, according to gun's direction and current charge power.
-        '''
-        ball = Shell(list(self.coord), [int(vel * np.cos(angle)), int(vel * np.sin(angle))], 10)
-        # add new shell
         return ball
         
     def set_angle(self, target_pos):
@@ -544,19 +469,12 @@ class ScoreTable:
         '''
         return self.t_destr - self.b_used
     def draw(self, screen):
-        self.score_surf = []
-        self.score_surf.append(self.font.render("Q Normal | W Scatter | E Laser" , True, WHITE))
-        self.score_surf.append(self.font.render("Destroyed: {}".format(self.t_destr), True, WHITE))
-        self.score_surf.append(self.font.render("Balls used: {}".format(self.b_used), True, WHITE))
-        self.score_surf.append(self.font.render("Total: {}".format(self.score()), True, RED))
-        if self.tank:
-            self.score_surf.append(self.font.render("Health: {}".format(self.tank.health), True, RED))
-
-        for i in range(len(self.score_surf)):
-            screen.blit(self.score_surf[i], [10, 10 + 30 * i])
-
-
-
+        score_surf = []
+        score_surf.append(self.font.render("Destroyed: {}".format(self.t_destr), True, WHITE))
+        score_surf.append(self.font.render("Balls used: {}".format(self.b_used), True, WHITE))
+        score_surf.append(self.font.render("Total: {}".format(self.score()), True, RED))
+        for i in range(3):
+            screen.blit(score_surf[i], [10, 10 + 30*i])
 class Manager:
     '''
     Class that manages events' handling, ball's motion and collision, target creation, etc.
@@ -579,7 +497,6 @@ class Manager:
             self.targets.append(Target(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())), 30 - max(0, self.score_t.score()))))
             self.targets.append(SmoothRandomMovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),30 - max(0, self.score_t.score()))))
             self.targets.append(CircularMovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),30 - max(0, self.score_t.score()))))
-            # Add BombDroppingTarget
             self.targets.append(BombDroppingTarget(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())), 30 - max(0, self.score_t.score()))))
     def process(self, events, screen):
         '''
@@ -603,43 +520,27 @@ class Manager:
         for event in events:
             if event.type == pg.QUIT:
                 done = True
-            elif event.type == pg.KEYDOWN: #move up
-                if event.key == pg.K_UP:
+            elif event.type == pg.KEYDOWN:
+                if event.key == pg.K_LEFT:
                     self.gun.moving = True
                     self.gun.move(-5)
                     self.tank.moving = True
                     self.tank.move(-5)
-                elif event.key == pg.K_DOWN: #move down
+                elif event.key == pg.K_RIGHT:
                     self.gun.moving = True
                     self.gun.move(5)
                     self.tank.moving = True
                     self.tank.move(5)
-                elif event.key == pg.K_q: #normal Q
-                    self.gun.color = RED
-                    self.gun.activate()
-                elif event.key == pg.K_w: #scatter W
-                    self.gun.color = GREEN
-                    self.gun.activate()
-                elif event.key == pg.K_e: #laser E
-                    self.gun.color = BLUE
-                    self.gun.activate()
             elif event.type == pg.KEYUP:
                 self.gun.moving = False
                 self.tank.moving = False
-                if not self.dead:
-                    if event.key == pg.K_q:
-                        self.balls.append(self.gun.strike())
-                        self.score_t.b_used += 1
-                    elif event.key == pg.K_w:
-                        self.balls.append(self.gun.strike_scatter(self.gun.pow, self.gun.angle))
-                        self.balls.append(self.gun.strike_scatter(self.gun.pow, self.gun.angle-0.1))
-                        self.balls.append(self.gun.strike_scatter(self.gun.pow, self.gun.angle+0.1))
-                        self.gun.pow = self.gun.min_pow
-                        self.gun.active = False
-                        self.score_t.b_used += 1
-                    elif event.key == pg.K_e:
-                        self.balls.append(self.gun.strike_laser())
-                        self.score_t.b_used += 1
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    self.gun.activate()
+            elif event.type == pg.MOUSEBUTTONUP:
+                if event.button == 1 and not self.dead:
+                    self.balls.append(self.gun.strike())
+                    self.score_t.b_used += 1
             #elif self.dead:
                 #clock.tick(60000)
                 #done = True
