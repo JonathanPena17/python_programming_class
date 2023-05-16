@@ -2,10 +2,8 @@ import numpy as np
 import pygame as pg
 from random import randint, gauss
 import math
-
 pg.init()
 pg.font.init()
-
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
@@ -14,21 +12,16 @@ BLUE = (89, 203, 232)
 GREEN = (0, 110, 51)
 
 SCREEN_SIZE = (800, 600)
-
-
 def rand_color():
     return (randint(0, 255), randint(0, 255), randint(0, 255))
-
 class GameObject:
-
     def move(self):
         pass
     
     def draw(self, screen):
         pass  
-
 class Tank(GameObject):
-    def __init__(self, coord=[SCREEN_SIZE[0]//2, SCREEN_SIZE[1]-30], angle=0, maxSpeed = 10, color = BLACK, health = 100, score_table=None):
+    def __init__(self, coord=[SCREEN_SIZE[0]//2, SCREEN_SIZE[1]-30], angle=0, maxSpeed = 10, color = BLACK):
         '''
         Constructor method
         '''
@@ -38,12 +31,11 @@ class Tank(GameObject):
         self.color = color
         self.active = False
         self.moving = False
-        self.health = health
-        self.score_table = score_table 
         self.inc = 0
         self.alive = True
     def draw(self, screen):
         '''
+        Draws the target on the screen
         Draws the tank on the screen
         '''
         # pg.draw.rect(screen, WHITE, [10, 20, 30, 40])
@@ -52,24 +44,23 @@ class Tank(GameObject):
             self.move(self.inc)
     def move(self, inc):
         '''
+        Changes vertical position of the gun.
         Changes the horizontal position of the tank
         '''
         self.inc = inc
         if (self.moving):
             if (self.coord[0] > 30 or inc > 0) and (self.coord[0] < SCREEN_SIZE[0] - 30 or inc < 0):
                 self.coord[0] += inc
-    
-    def checkCollision(self, bomb):
+    def checkCollision(self, Shell):
         '''
-        Checks collision of the tank with bombs
+        Checks collision of the tank with shells
         '''
-        if (bomb.coord[0] > self.coord[0] - 15 and bomb.coord[0] < self.coord[0] + 15):
-            if (bomb.coord[1] > self.coord[1] - 10):
+        if (Shell.coord[0] > self.coord[0] - 15 and Shell.coord[0] < self.coord[0] + 15):
+            if (Shell.coord[1] > self.coord[1] - 10):
                 return True
         return False
-
     
-    def explosion(self, x, y, size=150):
+    def explosion(self, x, y, size=250):
         explode = True
 
         explosion_surface = pg.Surface(screen.get_size())  # Create a surface with the same size as the screen
@@ -97,16 +88,6 @@ class Tank(GameObject):
 
         screen.blit(explosion_surface, (0, 0))  # Blit the explosion surface onto the screen
         pg.display.update()
-    
-    def decrease_health(self, amount):
-        '''
-        Decreases the tank's health by the specified amount.
-        '''
-        self.health -= amount
-        print(self.health)
-
-
-
 class Shell(GameObject):
     '''
     The ball class. Creates a ball, controls it's movement and implement it's rendering.
@@ -122,7 +103,6 @@ class Shell(GameObject):
         self.color = color
         self.rad = rad
         self.is_alive = True
-
     def check_corners(self, refl_ort=0.8, refl_par=0.9):
         '''
         Reflects ball's velocity when ball bumps into the screen corners. Implemetns inelastic rebounce.
@@ -136,7 +116,6 @@ class Shell(GameObject):
                 self.coord[i] = SCREEN_SIZE[i] - self.rad
                 self.vel[i] = -int(self.vel[i] * refl_ort)
                 self.vel[1-i] = int(self.vel[1-i] * refl_par)
-
     def move(self, time=1, grav=0):
         '''
         Moves the ball according to it's velocity and time step.
@@ -149,7 +128,6 @@ class Shell(GameObject):
         self.check_corners()
         if self.vel[0]**2 + self.vel[1]**2 < 2**2 and self.coord[1] > SCREEN_SIZE[1] - 2*self.rad:
             self.is_alive = False
-
     def draw(self, screen):
         '''
         Draws the ball on appropriate surface.
@@ -225,14 +203,12 @@ class Cannon(GameObject):
         Activates gun's charge.
         '''
         self.active = True
-
     def gain(self, inc=2):
         '''
         Increases current gun charge power.
         '''
         if self.active and self.pow < self.max_pow:
             self.pow += inc
-
     def strike(self):
         '''
         Creates ball, according to gun's direction and current charge power.
@@ -276,7 +252,6 @@ class Cannon(GameObject):
         Sets gun's direction to target position.
         '''
         self.angle = np.arctan2(target_pos[1] - self.coord[1], target_pos[0] - self.coord[0])
-
     def move(self, inc):
         '''
         Changes vertical position of the gun.
@@ -285,7 +260,6 @@ class Cannon(GameObject):
         if (self.moving):
             if (self.coord[0] > 30 or inc > 0) and (self.coord[0] < SCREEN_SIZE[0] - 30 or inc < 0):
                 self.coord[0] += inc
-
     def draw(self, screen):
         '''
         Draws the gun on the screen.
@@ -314,13 +288,11 @@ class Target(GameObject):
         self.coord = coord
         self.rad = rad
         self.dropsBombs = False
-
         if color == None:
             color = rand_color()
         self.color = color
         
         
-
     def check_collision(self, ball):
         '''
         Checks whether the ball bumps into target.
@@ -328,13 +300,11 @@ class Target(GameObject):
         dist = sum([(self.coord[i] - ball.coord[i])**2 for i in range(2)])**0.5
         min_dist = self.rad + ball.rad
         return dist <= min_dist
-
     def draw(self, screen):
         '''
         Draws the target on the screen
         '''
         pg.draw.circle(screen, self.color, self.coord, self.rad)
-
     def move(self):
         """
         This type of target can't move at all.
@@ -353,6 +323,7 @@ class LinearMovingTargets(Target):
         self.check_corners()
     def check_corners(self):
         '''
+        Reflects ball's velocity when ball bumps into the screen corners. Implemetns inelastic rebounce.
         Reflects ball's velocity when ball bumps into the screen corners.
         '''
         for i in range(2):
@@ -400,7 +371,7 @@ class SmoothRandomMovingTargets(Target):
         super().__init__(coord, color, rad)
         self.vx = randint(-2, +2)
         self.vy = randint(-2, +2)
-    
+
     def move(self):
         '''
         Moves randomly but doesn't fo back and forth
@@ -444,7 +415,7 @@ class CircularMovingTargets(Target):
         self.offset = randint(-8, 8)
         if self.offset == 0:
             self.offset = self.offset + 1
-    
+
     def move(self):
         '''
         Moves in a circle
@@ -464,33 +435,30 @@ class CircularMovingTargets(Target):
             elif self.coord[i] > SCREEN_SIZE[i] - self.rad:
                 self.coord[i] = SCREEN_SIZE[i] - self.rad
 class BombDroppingTarget(Target):
-    WHITE = (255, 255, 255)
-    BLACK = (0, 0, 0)
-    RED = (255, 0, 0)
-    YELLOW = (255, 255, 0)
-
     def __init__(self, coord=None, color=None, rad=30):
         super().__init__(coord, color, rad)
         self.vx = randint(-2, +2)
         self.vy = randint(-2, +2)
         self.bombs = []  # Initialize the bombs attribute as an empty list
         self.tank = Tank()
-
+        self.dropsBombs = True
     def move(self):
         self.coord[0] += self.vx
         self.coord[1] = self.rad  # Restrict vertical movement to the top of the screen
-        self.checkCorners()
+        self.check_corners()
         
         # Drop a bomb at a certain probability
         if randint(1, 100) < 2:  # 5% chance of dropping a bomb
-            self.dropBombs()
+            self.drop_bomb()
         
          # Apply gravity to the bombs
         for bomb in self.bombs:
             bomb.move(time=1, grav=0.5)  # Adjust the gravity value as needed
         
-    def checkCorners(self):
-
+    def check_corners(self):
+        '''
+        Reflects ball's velocity when ball bumps into the screen corners. Implemetns inelastic rebounce.
+        '''
         for i in range(2):
             if self.coord[i] < self.rad:
                 self.coord[i] = self.rad
@@ -504,33 +472,26 @@ class BombDroppingTarget(Target):
                     self.vx = -int(self.vx)
                 else:
                     self.vy = -int(self.vy)
-
-        # Check if the bomb touches the ground or the tank
+        
         for bomb in self.bombs:
             if bomb.coord[1] >= SCREEN_SIZE[1] - bomb.rad:
                 # Bomb explodes when it touches the ground or collides with the tank
                 bomb.is_alive = False
                 if self.tank.checkCollision(bomb):
                     self.tank.explosion(self.tank.coord[0], self.tank.coord[1])  # Trigger the tank's explosion
-                    self.tank.decrease_health(50)
-                    self.tank.alive = False
                     self.dead = True
-                    print("boom!")
                 else:
                     self.explosion(bomb.coord[0], bomb.coord[1])  # Call the explosion method with bomb coordinates
 
         # Remove the bombs that have exploded
         self.bombs = [bomb for bomb in self.bombs if bomb.is_alive]
-
-
-    def dropBombs(self):
+    
+    def drop_bomb(self):
         # Create a new bomb object at the current position of the target
         bomb = Shell(list(self.coord), [0, 5], rad=10, color=RED)  # Customize the bomb properties as needed
         self.bombs.append(bomb)  # Add the bomb to the bombs list
-
     def draw(self, screen):
         super().draw(screen)  # Call the draw method of the parent class
-
         
         # Draw the bombs on the screen with flashing colors
         for bomb in self.bombs:
@@ -540,7 +501,7 @@ class BombDroppingTarget(Target):
                 color = YELLOW
             bomb.color = color
             bomb.draw(screen)
-    
+
     def explosion(self, x, y, size=50):
         explode = True
 
@@ -569,18 +530,19 @@ class BombDroppingTarget(Target):
 
         screen.blit(explosion_surface, (0, 0))  # Blit the explosion surface onto the screen
         pg.display.update()
-
 class ScoreTable:
-    def __init__(self, t_destr=0, b_used=0, tank=None):
+    '''
+    Score table class.
+    '''
+    def __init__(self, t_destr=0, b_used=0):
         self.t_destr = t_destr
         self.b_used = b_used
-        self.tank = tank
         self.font = pg.font.SysFont("dejavusansmono", 25)
-        self.score_surf = []
-
     def score(self):
+        '''
+        Score calculation method.
+        '''
         return self.t_destr - self.b_used
-
     def draw(self, screen):
         self.score_surf = []
         self.score_surf.append(self.font.render("Q Normal | W Scatter | E Laser" , True, WHITE))
@@ -607,9 +569,7 @@ class Manager:
         self.n_targets = n_targets
         self.new_mission()
         self.tank = Tank()
-        self.score_t = ScoreTable(tank=self.tank)
         self.dead = False
-
     def new_mission(self):
         '''
         Adds new targets.
@@ -619,26 +579,22 @@ class Manager:
             self.targets.append(Target(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())), 30 - max(0, self.score_t.score()))))
             self.targets.append(SmoothRandomMovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),30 - max(0, self.score_t.score()))))
             self.targets.append(CircularMovingTargets(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())),30 - max(0, self.score_t.score()))))
+            # Add BombDroppingTarget
             self.targets.append(BombDroppingTarget(rad=randint(max(1, 30 - 2*max(0, self.score_t.score())), 30 - max(0, self.score_t.score()))))
-
     def process(self, events, screen):
         '''
         Runs all necessary method for each iteration. Adds new targets, if previous are destroyed.
         '''
         done = self.handle_events(events)
-
         if pg.mouse.get_focused():
             mouse_pos = pg.mouse.get_pos()
             self.gun.set_angle(mouse_pos)
         self.move()
         self.collide()
         self.draw(screen)
-
         if len(self.targets) == 0 and len(self.balls) == 0:
             self.new_mission()
-
         return done
-
     def handle_events(self, events):
         '''
         Handles events from keyboard, mouse, etc.
@@ -688,7 +644,6 @@ class Manager:
                 #clock.tick(60000)
                 #done = True
         return done
-
     def draw(self, screen):
         '''
         Runs balls', gun's, targets' and score table's drawing method.
@@ -701,7 +656,6 @@ class Manager:
         self.gun.draw(screen)
         self.score_t.draw(screen)
         
-
     def move(self):
         '''
         Runs balls' and gun's movement method, removes dead balls.
@@ -716,8 +670,11 @@ class Manager:
         for i, target in enumerate(self.targets):
             target.move()
         self.gun.gain()
-
     def collide(self):
+        '''
+        Checks whether balls bump into targets, sets balls' alive trigger.
+        Checks if an enemy ball has collided with the tank
+        '''
         collisions = []
         targets_c = []
         for i, ball in enumerate(self.balls):
@@ -729,38 +686,22 @@ class Manager:
         for j in reversed(targets_c):
             self.score_t.t_destr += 1
             self.targets.pop(j)
-
-
-        dead_balls = []
-        for i, ball in enumerate(self.balls):
-            if not ball.is_alive:
-                dead_balls.append(i)
-        for i in reversed(dead_balls):
-            self.balls.pop(i)
-
-
+        for target in self.targets:
+            if target.dropsBombs == True:
+                for bomb in target.bombs:
+                    if (self.tank.checkCollision(bomb)):
+                        self.tank.alive = False
+                        self.gun.alive = False
+                        self.dead = True
         
-
-        
-
-
 screen = pg.display.set_mode(SCREEN_SIZE)
 pg.display.set_caption("Our gun")
-
 done = False
 clock = pg.time.Clock()
-
-mgr = Manager(n_targets=2)  # number of targets per type
-mgr.score_t = ScoreTable(tank=mgr.tank)  # Pass the tank instance to the ScoreTable constructor
-
-
+mgr = Manager(n_targets=2) # number of targets per type
 while not done:
     clock.tick(15)
     screen.fill(BLACK)
-
     done = mgr.process(pg.event.get(), screen)
-
     pg.display.flip()
-
-
 pg.quit()
