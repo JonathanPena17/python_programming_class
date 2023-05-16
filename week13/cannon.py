@@ -37,6 +37,7 @@ class Tank(GameObject):
         self.moving = False
         self.inc = 0
         self.alive = True
+        self.health = 3
     def draw(self, screen):
         '''
         Draws the tank on the screen
@@ -45,6 +46,7 @@ class Tank(GameObject):
         if (self.alive):
             pg.draw.rect(screen, WHITE, [self.coord[0]-15,self.coord[1]-10,30,20])
             self.move(self.inc)
+            
     def move(self, inc):
         '''
         Changes the horizontal position of the tank
@@ -416,6 +418,7 @@ class ScoreTable:
         score_surf.append(self.font.render("Destroyed: {}".format(self.t_destr), True, WHITE))
         score_surf.append(self.font.render("Balls used: {}".format(self.b_used), True, WHITE))
         score_surf.append(self.font.render("Total: {}".format(self.score()), True, RED))
+        #score_surf.append(self.font.render("Health: {}".format(
         for i in range(3):
             screen.blit(score_surf[i], [10, 10 + 30*i])
 
