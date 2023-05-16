@@ -1,4 +1,8 @@
 # Group_assignment
+
+How to play:
+
+Press A and D to move left and right. Hold down Q, W, or E to choose your ammunition and release to shoot. Aim with the mouse.
 Refactoring and extending the cannon project
 
 Things to be implemented:
