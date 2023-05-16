@@ -7,6 +7,7 @@ pg.font.init()
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
+YELLOW = (255, 255, 0)
 SCREEN_SIZE = (800, 600)
 def rand_color():
     return (randint(0, 255), randint(0, 255), randint(0, 255))
@@ -55,6 +56,35 @@ class Tank(GameObject):
             if (Shell.coord[1] > self.coord[1] - 10):
                 return True
         return False
+    
+    def explosion(self, x, y, size=250):
+        explode = True
+
+        explosion_surface = pg.Surface(screen.get_size())  # Create a surface with the same size as the screen
+        explosion_surface.set_colorkey((0, 0, 0))  # Set black color as the transparent color
+
+        color_choices = [(255, 0, 0), (255, 128, 128), (255, 255, 0), (255, 255, 128)]
+
+        while explode:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    quit()
+
+            magnitude = 1
+
+            while magnitude < size:
+                exploding_bit_x = x + randint(-1 * magnitude, magnitude)
+                exploding_bit_y = y + randint(-1 * magnitude, magnitude)
+
+                pg.draw.circle(explosion_surface, color_choices[randint(0, 3)], (exploding_bit_x, exploding_bit_y),
+                            randint(1, 5))
+                magnitude += 1
+
+            explode = False
+
+        screen.blit(explosion_surface, (0, 0))  # Blit the explosion surface onto the screen
+        pg.display.update()
 class Shell(GameObject):
     '''
     The ball class. Creates a ball, controls it's movement and implement it's rendering.
@@ -335,6 +365,7 @@ class BombDroppingTarget(Target):
         self.vx = randint(-2, +2)
         self.vy = randint(-2, +2)
         self.bombs = []  # Initialize the bombs attribute as an empty list
+        self.tank = Tank()
         self.dropsBombs = True
     def move(self):
         self.coord[0] += self.vx
@@ -366,6 +397,19 @@ class BombDroppingTarget(Target):
                     self.vx = -int(self.vx)
                 else:
                     self.vy = -int(self.vy)
+        
+        for bomb in self.bombs:
+            if bomb.coord[1] >= SCREEN_SIZE[1] - bomb.rad:
+                # Bomb explodes when it touches the ground or collides with the tank
+                bomb.is_alive = False
+                if self.tank.checkCollision(bomb):
+                    self.tank.explosion(self.tank.coord[0], self.tank.coord[1])  # Trigger the tank's explosion
+                    self.dead = True
+                else:
+                    self.explosion(bomb.coord[0], bomb.coord[1])  # Call the explosion method with bomb coordinates
+
+        # Remove the bombs that have exploded
+        self.bombs = [bomb for bomb in self.bombs if bomb.is_alive]
     
     def drop_bomb(self):
         # Create a new bomb object at the current position of the target
@@ -374,9 +418,43 @@ class BombDroppingTarget(Target):
     def draw(self, screen):
         super().draw(screen)  # Call the draw method of the parent class
         
-        # Draw the bombs on the screen
+        # Draw the bombs on the screen with flashing colors
         for bomb in self.bombs:
+            if randint(1, 2) == 1:  # Randomly select between red and yellow color
+                color = RED
+            else:
+                color = YELLOW
+            bomb.color = color
             bomb.draw(screen)
+
+    def explosion(self, x, y, size=50):
+        explode = True
+
+        explosion_surface = pg.Surface(screen.get_size())  # Create a surface with the same size as the screen
+        explosion_surface.set_colorkey((0, 0, 0))  # Set black color as the transparent color
+
+        color_choices = [(255, 0, 0), (255, 128, 128), (255, 255, 0), (255, 255, 128)]
+
+        while explode:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    quit()
+
+            magnitude = 1
+
+            while magnitude < size:
+                exploding_bit_x = x + randint(-1 * magnitude, magnitude)
+                exploding_bit_y = y + randint(-1 * magnitude, magnitude)
+
+                pg.draw.circle(explosion_surface, color_choices[randint(0, 3)], (exploding_bit_x, exploding_bit_y),
+                            randint(1, 5))
+                magnitude += 1
+
+            explode = False
+
+        screen.blit(explosion_surface, (0, 0))  # Blit the explosion surface onto the screen
+        pg.display.update()
 class ScoreTable:
     '''
     Score table class.
