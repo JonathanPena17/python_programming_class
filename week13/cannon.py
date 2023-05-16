@@ -593,12 +593,12 @@ class Manager:
             if event.type == pg.QUIT:
                 done = True
             elif event.type == pg.KEYDOWN: #move up
-                if event.key == pg.K_UP:
+                if event.key == pg.K_LEFT:
                     self.gun.moving = True
                     self.gun.move(-5)
                     self.tank.moving = True
                     self.tank.move(-5)
-                elif event.key == pg.K_DOWN: #move down
+                elif event.key == pg.K_RIGHT: #move down
                     self.gun.moving = True
                     self.gun.move(5)
                     self.tank.moving = True
