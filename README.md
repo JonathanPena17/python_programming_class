@@ -2,7 +2,8 @@
 
 How to play:
 
-Press A and D to move left and right. Hold down Q, W, or E to choose your ammunition and release to shoot. Aim with the mouse.
+Press A and D to move left and right. Aim with your cursor. Hold down Q (normal), W (scatter), or E (laser) to choose your shell type and release to shoot. The longer you hold Q or W, the faster the shot. For E, you must be at maximum charge to fire, otherwise you will fire a blank instead. 
+
 Refactoring and extending the cannon project
 
 Things to be implemented:
