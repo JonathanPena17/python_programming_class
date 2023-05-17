@@ -102,7 +102,7 @@ class EnemyTank(Tank):
         '''
         Initiates a random shot from the tank's cannon.
         '''
-        if randint(0, 100) < 50:  # Adjust the probability as desired
+        if randint(0, 100) < 5:  # Adjust the probability as desired
             min_angle = math.radians(60)
             max_angle = math.radians(120)
             random_angle = np.random.uniform(min_angle, max_angle)
