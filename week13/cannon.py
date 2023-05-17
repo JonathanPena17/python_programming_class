@@ -136,45 +136,64 @@ class Shell(GameObject):
 
 class Laser(GameObject):
     '''
-    Create alternate Shell shot that is a straight line.
+    The ball class. Creates a ball, controls it's movement and implement it's rendering.
     '''
-    def __init__(self, coord, angle, rad=100,  color=None):
+    def __init__(self, coord, vel, angle, rad=5, color=None):
         '''
         Constructor method. Initializes ball's parameters and initial values.
         '''
         self.coord = coord
-        self.angle = angle
+        self.vel = vel
         if color == None:
             color = rand_color()
-        self.rad = rad
         self.color = color
+        self.rad = rad
+        self.angle = angle
         self.is_alive = True
-    def move(self, grav=0):
+    def check_corners(self, refl_ort=0.8, refl_par=0.9):
         '''
-        Keeps laser trail stationary
+        Reflects ball's velocity when ball bumps into the screen corners. Implemetns inelastic rebounce.
         '''
+        for i in range(2):
+            if self.coord[i] < self.rad:
+                self.coord[i] = self.rad
+                self.vel[i] = -int(self.vel[i] * refl_ort)
+                self.vel[1-i] = int(self.vel[1-i] * refl_par)
+            elif self.coord[i] > SCREEN_SIZE[i] - self.rad:
+                self.coord[i] = SCREEN_SIZE[i] - self.rad
+                self.vel[i] = -int(self.vel[i] * refl_ort)
+                self.vel[1-i] = int(self.vel[1-i] * refl_par)
+    def move(self, time=1, grav= -10):
         '''
-         current_time = pg.time.get_ticks() 
-        remove_laser_time = pg.time.get_ticks() + 1000
-        while remove_laser_time >= current_time:
-            current_time = pg.time.get_ticks()
-            if remove_laser_time <= current_time:
-                self.is_alive = False
+        Moves the ball according to it's velocity and time step.
+        Changes the ball's velocity due to gravitational force.
+        hahahshds
         '''
-        pass
+        self.vel[1] += 0
+        for i in range(2):
+            self.coord[i] += time * self.vel[i]
+       
+        if self.vel[0]**2 + self.vel[1]**2 < 2**2 and self.coord[1] > SCREEN_SIZE[1] - 2*self.rad:
+            self.is_alive = False
+
     def draw(self, screen):
         '''
-        Draws line straight from cannon angle
+        Draws the ball on appropriate surface.
         '''
+        vec_1 = np.array([int(5*np.cos(self.angle - np.pi/2)), int(5*np.sin(self.angle - np.pi/2))])
+        vec_2 = np.array([int(50*np.cos(self.angle)), int(50*np.sin(self.angle))])
+        pg.draw.circle(screen, self.color, list((self.coord[0], self.coord[1])), self.rad) #actual hitbox of the laser
+        #cosmetic visualization of the laser
         laser_shape = []
         vec_1 = np.array([int(5*np.cos(self.angle - np.pi/2)), int(5*np.sin(self.angle - np.pi/2))])
-        vec_2 = np.array([int(800*np.cos(self.angle)), int(800*np.sin(self.angle))])
+        vec_2 = np.array([int(100*np.cos(self.angle)), int(100*np.sin(self.angle))])
         gun_pos = np.array(self.coord)
         laser_shape.append((gun_pos + vec_1).tolist())
         laser_shape.append((gun_pos + vec_1 + vec_2).tolist())
         laser_shape.append((gun_pos + vec_2 - vec_1).tolist())
         laser_shape.append((gun_pos - vec_1).tolist())
         pg.draw.polygon(screen, self.color, laser_shape)
+
 
 class Cannon(GameObject):
     '''
@@ -222,9 +241,10 @@ class Cannon(GameObject):
         Creates laser, according to gun's direction and current charge power.
         Must be max power to shoot laser, otherwise shoot blank.
         '''
-        angle = self.angle
-        if self.pow == 50:
-            ball = Laser(list(self.coord), angle)
+        if self.pow == 50 and self.alive:
+            vel = self.pow
+            angle = self.angle
+            ball = Laser(list(self.coord), [int(vel * np.cos(angle)), int(vel * np.sin(angle))], angle)
             self.pow = self.min_pow
             self.active = False
             
