@@ -8,7 +8,12 @@ Refactoring and extending the cannon project
 
 Things to be implemented:
 1. Implement various types of projectiles.
-2. Develop several target types with different movement patterns.
+  ```
+  class Laser(GameObject)
+  def strike_laser()
+  def strike_scatter()
+  ```
+3. Develop several target types with different movement patterns.
   ```
   class LinearMovingTargets(Target)
   class RandomMovingTargets(Target)
