@@ -88,6 +88,38 @@ class Tank(GameObject):
 
         screen.blit(explosion_surface, (0, 0))  # Blit the explosion surface onto the screen
         pg.display.update()
+
+class EnemyTank(Tank):
+    def __init__(self, coord=[SCREEN_SIZE[0]//2, SCREEN_SIZE[1]-30], angle=0, maxSpeed=5, color=RED):
+        super().__init__(coord, angle, maxSpeed, color)
+        self.cannon = Cannon(coord, angle)
+
+    def move(self, inc):
+        self.coord[0] += randint(-30, 30)  # Random horizontal movement
+        self.coord[0] = max(30, min(SCREEN_SIZE[0] - 30, self.coord[0]))  # Keep tank within screen boundaries
+
+    def shoot_randomly(self):
+        '''
+        Initiates a random shot from the tank's cannon.
+        '''
+        if randint(0, 100) < 50:  # Adjust the probability as desired
+            min_angle = math.radians(60)
+            max_angle = math.radians(120)
+            random_angle = np.random.uniform(min_angle, max_angle)
+            random_power = randint(45, 50)
+
+            # Set the cannon's angle to the random angle
+            self.cannon.angle = random_angle
+
+            self.cannon.pow = random_power
+
+            # Fire the cannon
+            shell = self.cannon.strike()
+
+            return shell
+    
+
+        return None
 class Shell(GameObject):
     '''
     The ball class. Creates a ball, controls it's movement and implement it's rendering.
@@ -458,6 +490,7 @@ class BombDroppingTarget(Target):
         self.bombs = []  # Initialize the bombs attribute as an empty list
         self.tank = Tank()
         self.dropsBombs = True
+    
     def move(self):
         self.coord[0] += self.vx
         self.coord[1] = self.rad  # Restrict vertical movement to the top of the screen
@@ -546,6 +579,8 @@ class BombDroppingTarget(Target):
 
         screen.blit(explosion_surface, (0, 0))  # Blit the explosion surface onto the screen
         pg.display.update()
+
+        
 class ScoreTable:
     '''
     Score table class.
@@ -579,6 +614,7 @@ class Manager:
         self.n_targets = n_targets
         self.new_mission()
         self.tank = Tank()
+        self.enemytank = EnemyTank()
         self.dead = False
     def new_mission(self):
         '''
@@ -649,9 +685,11 @@ class Manager:
                     elif event.key == pg.K_e:
                         self.balls.append(self.gun.strike_laser())
                         self.score_t.b_used += 1
-            #elif self.dead:
-                #clock.tick(60000)
-                #done = True
+            #Handle random shooting from the enemy tank
+            if isinstance(self.enemytank, EnemyTank):
+                shell = self.enemytank.shoot_randomly()
+                if shell is not None:
+                    self.balls.append(shell)
         return done
     def draw(self, screen):
         '''
@@ -663,6 +701,7 @@ class Manager:
             target.draw(screen)
         self.tank.draw(screen)
         self.gun.draw(screen)
+        self.enemytank.draw(screen)
         self.score_t.draw(screen)
         
     def move(self):
